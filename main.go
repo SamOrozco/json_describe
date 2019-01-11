@@ -6,6 +6,7 @@ import (
 	js "github.com/go-restit/lzjson"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -81,7 +82,7 @@ func describe(jsonNode js.Node, key string) (JsonDescription, error) {
 		if len(childKeys) < 1 {
 			return JsonDescription{}, nil
 		}
-		root := JsonDescription{DataType: "object", Key: key}
+		root := JsonDescription{DataType: "item", Key: key}
 		root.Children = make([]JsonDescription, 1)
 		for _, key := range childKeys {
 			childNode := jsonNode.Get(key)
@@ -100,7 +101,7 @@ func describe(jsonNode js.Node, key string) (JsonDescription, error) {
 		if len < 1 {
 			return JsonDescription{}, nil
 		}
-		root := JsonDescription{DataType: "array", Key: key}
+		root := JsonDescription{DataType: "relationship", Key: key}
 		root.Children = make([]JsonDescription, 1)
 		for i := 0; i < len; i++ {
 			node, err := describe(jsonNode.GetN(i), "obj"+string(i))
@@ -115,8 +116,36 @@ func describe(jsonNode js.Node, key string) (JsonDescription, error) {
 	return JsonDescription{}, nil
 }
 
+// this method rips our all white space and iterates to
+// see if the string is made up of
+//2018-11-01T13:30:37 - patters
+//2018-11-01
+var DateTimePatterns = [...]string{
+	"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}",
+	// you an add more patterns if you want it will affect performance
+	// every single string pattern is checked
+}
+
+var DatePatterns = [...]string{
+	"^[0-9]{4}-[0-9]{2}-[0-9]{2}",
+	// you an add more patterns if you want it will affect performance
+	// every single string pattern is checked
+}
+
 func getSpecificStringType(val string) string {
-	
+	for _, pattern := range DateTimePatterns {
+		if match, _ := regexp.Match(pattern, []byte(val)); match {
+			return "date-time"
+		}
+	}
+
+	for _, pattern := range DatePatterns {
+		if match, _ := regexp.Match(pattern, []byte(val)); match {
+			return "date"
+		}
+	}
+
+	return "string"
 }
 
 //func describeType(jsonNode js.Node) (FieldDescription, error) {
