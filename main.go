@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	js "github.com/go-restit/lzjson"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"io/ioutil"
-	"os"
 	"regexp"
 	"strings"
 )
@@ -38,15 +39,45 @@ func (desc JsonDescription) printDescriptionJson() {
 	println(string(jso))
 }
 
-func main() {
-	jsonFileLoc := os.Args[1]
-	if len(jsonFileLoc) < 1 {
-		panic("Invalid file location")
-	}
-	DescribeJson(jsonFileLoc)
+func (desc JsonDescription) getDescriptionJson() string {
+	jso, _ := json.Marshal(desc)
+	return string(jso)
 }
 
-func DescribeJson(loc string) {
+func main() {
+
+	// Echo instance
+	e := echo.New()
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Routes
+	e.POST("describe/json", describeJson)
+
+	e.Start(":9000")
+	// this is for reading from files
+	//jsonFileLoc := os.Args[1]
+	//if len(jsonFileLoc) < 1 {
+	//	panic("Invalid file location")
+	//}
+	//DescribeJsonFromFile(jsonFileLoc)
+}
+
+// Handler
+func describeJson(c echo.Context) error {
+	body := c.Request().Body
+	contents, err := ioutil.ReadAll(body)
+	if err != nil {
+		return err
+	}
+	desc, err := DescribeJsonFromString(string(contents))
+	c.String(200, desc.getDescriptionJson())
+	return nil
+}
+
+func DescribeJsonFromFile(loc string) {
 	// read all contents from file into body
 	body, err := readContentsFromFile(loc)
 	if err != nil {
@@ -58,10 +89,19 @@ func DescribeJson(loc string) {
 	stringReader := strings.NewReader(body)
 	root := js.Decode(stringReader)
 	// we want to check if the root is anything other than an object
-	if root.Type() == js.TypeObject {
-		desc, _ := describe(root, "root")
-		desc.printDescriptionJson()
+	desc, _ := describe(root, "root")
+	desc.printDescriptionJson()
+}
+
+func DescribeJsonFromString(body string) (JsonDescription, error) {
+	if len(body) < JSON_MIN_LENGTH {
+		panic("Invalid json body")
 	}
+	stringReader := strings.NewReader(body)
+	root := js.Decode(stringReader)
+	// we want to check if the root is anything other than an object
+	desc, _ := describe(root, "root")
+	return desc, nil
 }
 
 // we know that we are only going to get objects here
@@ -108,7 +148,7 @@ func describe(jsonNode js.Node, key string) (JsonDescription, error) {
 		root.Children = make([]JsonDescription, 0)
 		// if the type is array we are only going to
 		// parse the first child and assume all the rest are the same
-		node, err := describe(jsonNode.GetN(0), "obj"+string(0))
+		node, err := describe(jsonNode.GetN(0), "obj"+ "0")
 		if err != nil {
 			panic(err)
 		}
