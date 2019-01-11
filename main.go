@@ -43,9 +43,12 @@ func main() {
 	if len(jsonFileLoc) < 1 {
 		panic("Invalid file location")
 	}
+	DescribeJson(jsonFileLoc)
+}
 
+func DescribeJson(loc string) {
 	// read all contents from file into body
-	body, err := readContentsFromFile(jsonFileLoc)
+	body, err := readContentsFromFile(loc)
 	if err != nil {
 		panic(err)
 	}
@@ -102,14 +105,14 @@ func describe(jsonNode js.Node, key string) (JsonDescription, error) {
 			return JsonDescription{}, nil
 		}
 		root := JsonDescription{DataType: "relationship", Key: key}
-		root.Children = make([]JsonDescription, 1)
-		for i := 0; i < len; i++ {
-			node, err := describe(jsonNode.GetN(i), "obj"+string(i))
-			if err != nil {
-				panic(err)
-			}
-			root.Children = append(root.Children, node)
+		root.Children = make([]JsonDescription, 0)
+		// if the type is array we are only going to
+		// parse the first child and assume all the rest are the same
+		node, err := describe(jsonNode.GetN(0), "obj"+string(0))
+		if err != nil {
+			panic(err)
 		}
+		root.Children = append(root.Children, node)
 		return root, nil
 	}
 
@@ -132,20 +135,31 @@ var DatePatterns = [...]string{
 	// every single string pattern is checked
 }
 
+var cache = make(map[string]string, 100)
+var dateTime = "date-time"
+var date = "date-time"
+var stringType = "string"
+
 func getSpecificStringType(val string) string {
+	if val, ok := cache[val]; ok {
+		return val
+	}
 	for _, pattern := range DateTimePatterns {
 		if match, _ := regexp.Match(pattern, []byte(val)); match {
-			return "date-time"
+			cache[val] = dateTime
+			return dateTime
 		}
 	}
 
 	for _, pattern := range DatePatterns {
 		if match, _ := regexp.Match(pattern, []byte(val)); match {
-			return "date"
+			cache[val] = date
+			return date
 		}
 	}
 
-	return "string"
+	cache[val] = stringType
+	return stringType
 }
 
 //func describeType(jsonNode js.Node) (FieldDescription, error) {

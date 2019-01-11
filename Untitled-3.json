@@ -1,0 +1,31 @@
+{
+    "@odata.context": "http://humana.360stage.net/MobileWebServices/apis/360facility/v1/$metadata#userpropertyassociation",
+    "value": [
+        {
+            "Id": 824,
+            "UserId": 27,
+            "PropertyId": 54,
+            "DefaultPropertyFlag": true,
+            "DefaultSpaceId": 570,
+            "GuestFlag": false,
+            "DefaultSubspaceId": null,
+            "UserExternalId": "",
+            "PropertyExternalId": "820",
+            "DefaultSpaceExternalId": null,
+            "DefaultSubspaceExternalId": null
+        },
+        {
+            "Id": 145840,
+            "UserId": 27,
+            "PropertyId": 62,
+            "DefaultPropertyFlag": false,
+            "DefaultSpaceId": 582,
+            "GuestFlag": false,
+            "DefaultSubspaceId": null,
+            "UserExternalId": "",
+            "PropertyExternalId": "01050",
+            "DefaultSpaceExternalId": null,
+            "DefaultSubspaceExternalId": null
+        }
+    ]
+}
