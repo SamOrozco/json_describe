@@ -54,6 +54,7 @@ func main() {
 	e.Use(middleware.Recover())
 
 	// Routes
+	e.POST("/", healthCheck)
 	e.POST("describe/json", describeJson)
 
 	e.Start(":9000")
@@ -64,6 +65,11 @@ func main() {
 	//}
 	//DescribeJsonFromFile(jsonFileLoc)
 }
+
+func healthCheck(c echo.Context) error {
+	return c.JSON(200, "")
+}
+
 
 // Handler
 func describeJson(c echo.Context) error {
